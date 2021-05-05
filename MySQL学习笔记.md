@@ -2,11 +2,15 @@
 
 ## 登录和退出MySQL服务器
 
-# 登录MySQL
-$ mysql -uroot -p12345612
+## 登录MySQL
+```
+mysql -uroot -p12345612
+```
 
-# 退出MySQL数据库服务器
+## 退出MySQL数据库服务器
+```
 exit;
+```
 
 ## 基本语法
 
