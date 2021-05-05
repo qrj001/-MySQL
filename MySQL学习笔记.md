@@ -2,13 +2,11 @@
 
 ## 登录和退出MySQL服务器
 
-```shell
 # 登录MySQL
-$ mysql -u root -p12345612
+$ mysql -uroot -p12345612
 
 # 退出MySQL数据库服务器
 exit;
-```
 
 ## 基本语法
 
@@ -19,10 +17,10 @@ show databases;
 -- 创建数据库
 CREATE DATABASE test;
 
--- 切换数据库
+--选中数据库
 use test;
 
--- 显示数据库中的所有表
+-- 显示某个数据库中的所有表
 show tables;
 
 -- 创建数据表
@@ -36,7 +34,7 @@ CREATE TABLE pet (
 );
 
 -- 查看数据表结构
--- describe pet;
+describe pet;
 desc pet;
 
 -- 查询表
