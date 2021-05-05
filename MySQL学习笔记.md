@@ -14,16 +14,16 @@ exit;
 
 ```mysql
 -- 显示所有数据库
-show databases;
+SHOW DATABASES;
 
 -- 创建数据库
 CREATE DATABASE test;
 
 --选中数据库
-use test;
+USE test;
 
 -- 显示某个数据库中的所有表
-show tables;
+SHOW TABLES;
 
 -- 创建数据表
 CREATE TABLE pet (
@@ -36,8 +36,8 @@ CREATE TABLE pet (
 );
 
 -- 查看数据表结构
-describe pet;
-desc pet;
+DESCRIBE pet;
+DESC pet;
 
 -- 查询表
 SELECT * from pet;
