@@ -56,7 +56,9 @@ DROP TABLE myorder;
 ```
 
 ## SQL数据类型
+### 数据类型大致分为三类：字符串， 数值， 时期/时间
 ```
+--- 字符串 （按字符串大小选择类型）
 纯英文和数字，用char/varchar,英文字符占一个字节，中文字符占两个字节.
 含有中文字符，用nchar/nvarchar,中英文字符都占取两个字节。
 
@@ -65,9 +67,12 @@ varchar(size)	可变长度的字符串，存储大小为输入数据的字节的
 nchar(n)	固定长度的 Unicode 数据。最多 4,000 个字符。
 nvarchar(n)	可变长度的 Unicode 数据。最多 4,000 个字符。
 
+--- 数值 （按照数值大小选择类型）
 INT(size)	size规定最大位数。
 FLOAT(size,d)	带有浮动小数点的小数字。size规定最大位数。d规定小数点右侧的最大位数。
 DOUBLE(size,d)	带有浮动小数点的大数字。size规定最大位数。d规定小数点右侧的最大位数。
+
+--- 日期/时间（按格式选择类型）
 DATE() 日期格式：YYYY-MM-DD
 DATETIME()	日期和时间的组合。格式：YYYY-MM-DD HH:MM:SS
 
