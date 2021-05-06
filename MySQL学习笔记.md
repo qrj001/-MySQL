@@ -207,8 +207,8 @@ ALTER TABLE user MODIFY age INT;
 ### 外键约束 - FOREIGN KEY
 
 #### 副表中的FOREIGH KEY 指向主表中的PRIMARY KEY，在添加/删除数据时有限制：
-#### 1. 主表中没有的数据值，副表不可以使用；
-#### 2. 主表中的记录被副表引用时，主表不可以被删除。
+1. 主表中没有的数据值，副表不可以使用；
+2. 主表中的记录被副表引用时，主表不可以被删除。
 
 ```mysql
 -- 班级表（主表）
@@ -415,13 +415,14 @@ SELECT * FROM score WHERE degree IN (85, 86, 88);
 SELECT COUNT(*) FROM student WHERE class = '95031';
 ```
 4. 查询 score 表中的最高分的学生学号和课程编号。
-   -- 子查询: (SELECT MAX(degree) FROM score) = 算出最高分
+  
 ```
-   SELECT s_no, c_no FROM score WHERE degree = (SELECT MAX(degree) FROM score);
+子查询: (SELECT MAX(degree) FROM score) = 算出最高分
+SELECT s_no, c_no FROM score WHERE degree = (SELECT MAX(degree) FROM score);
 ```
 
-   -- 排序查询: order by ... limit r,n = 排序后从第r行开始，查询n条数据  = limit n offset r
 ```mysql
+排序查询: order by ... limit r,n = 排序后从第r行开始，查询n条数据  = limit n offset r
 SELECT s_no, c_no, degree FROM score ORDER BY degree DESC LIMIT 0, 1;
 ```
 
