@@ -250,6 +250,7 @@ CREATE TABLE myorder (
 );
 ```
 问题：`product_name` 只依赖于 `product_id` ，`customer_name` 只依赖于 `customer_id` 。也就是说，除主键外的其他列，只依赖于主键的部分字段，不满足第二范式。
+解决方法：拆表
 
 ```mysql
 CREATE TABLE myorder (
@@ -267,8 +268,8 @@ CREATE TABLE customer (
     id INT PRIMARY KEY,
     name VARCHAR(20)
 );
-```
 
+```
 拆分之后，`myorder` 表中的 `product_id` 和 `customer_id` 完全依赖于 `order_id` 主键，而 `product` 和 `customer` 表中的其他字段又完全依赖于主键。满足了第二范式的设计！
 
 ### 3NF
@@ -284,7 +285,8 @@ CREATE TABLE myorder (
 );
 ```
 
-表中的 `customer_phone` 有可能依赖于 `order_id` 、 `customer_id` 两列，也就不满足了第三范式的设计：其他列之间不能有传递依赖关系。
+问题：表中的 `customer_phone` 依赖于非主键列`customer_id` ，不满足第三范式。
+解决方法：拆表
 
 ```mysql
 CREATE TABLE myorder (
@@ -395,8 +397,8 @@ SELECT * FROM teacher;
 
 ### 增删改查练习
 
-```mysql
 
+```mysql
 -- 查询 score 表中degree在60-80之间的所有行
 -- BETWEEN xx AND xx: 查询区间
 SELECT * FROM score WHERE degree BETWEEN 60 AND 80;
