@@ -1,12 +1,12 @@
 # MySQL学习笔记
 
 ## 登录MySQL数据库服务器
-```
+```mysql
 mysql -uroot -p12345612
 ```
 
 ## 退出MySQL数据库服务器
-```
+```mysql
 exit;
 ```
 
@@ -81,11 +81,10 @@ DATETIME()	日期和时间的组合。格式：YYYY-MM-DD HH:MM:SS
 
 ## 建表约束
 
-### 主键约束 -  PRIMARY KEY（列1）
+### 主键约束 
 
-```mysql
--- 主键约束
--- 使某列的值不重复且不得为空，确保表内所有数据的唯一性。
+#### 主键约束 -  PRIMARY KEY - 字段不重复且不为空，保证表内所有数据的唯一性。
+```mysql 
 CREATE TABLE user (
     id INT PRIMARY KEY,
     name VARCHAR(20)
@@ -98,10 +97,10 @@ CREATE TABLE user (
     name VARCHAR(20)
     PRIMARY KEY（id）
 );
-
-
--- 联合主键 - PRIMARY KEY（列1，列2，...）
--- 联合主键中的每列的值都不能为空，并且加起来不重复。可有多个列
+```
+####  联合主键 - PRIMARY KEY（列1，列2，...）
+####  联合主键中的每列的值都不能为空，并且加起来不重复。可有多个列
+```mysql
 CREATE TABLE user4 (
     id INT,
     name VARCHAR(20),
@@ -116,9 +115,11 @@ CREATE TABLE user4 (
 | name     | varchar(20) | NO   | PRI | NULL    |       |
 | password | varchar(20) | NO   |     | NULL    |       |
 +----------+-------------+------+-----+---------+-------+
+```
+#### 自增约束 - AUTO_INCREMENT
+#### 自增约束的主键由系统自动递增生成。必须是主键才能自增
 
--- 自增约束 - AUTO_INCREMENT
--- 自增约束的主键由系统自动递增生成。必须是主键才能自增
+```mysql
 CREATE TABLE user (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(20)
@@ -140,73 +141,76 @@ insert into user(name) values('ab');
 |  2 | ab   |
 |  3 | ab   |
 +----+------+
-
--- 添加主键约束 - ALTER ... MODIFY/ADD
--- 如果忘记设置主键，还可以通过SQL语句设置（两种方式）：
+```
+#### 添加主键约束 - ALTER ... MODIFY/ADD
+```mysql
+-- 如果忘记设置主键：
 ALTER TABLE user MODIFY id INT PRIMARY KEY;
 ALTER TABLE user ADD PRIMARY KEY(id,name);
-
-
--- 删除主键 - ALTER TABLE ...DROP PRIMARY KEY
+```
+#### 删除主键 - ALTER TABLE ...DROP PRIMARY KEY
+```mysql
 ALTER TABLE user DROP PRIMARY KEY;
 ```
 
-### 唯一主键 - UNIQUE
+### 唯一主键 - UNIQUE - 不能重复（可有NULL，但只能有一个NULL）
 
 ```mysql
--- 建表时创建唯一主键
 CREATE TABLE user (
     id INT,
     name VARCHAR(20),
     UNIQUE(name)
 ); #name不能重复，但能有且仅有1个NULL
 
-UNIQUE(name，id) #两个键在一起不重复
-
--- 添加唯一主键 - ALTER TABLE ... ADD/MODIFY 
--- 如果建表时没有设置唯一建，还可以通过SQL语句设置（两种方式）：
+UNIQUE(name，id) #两个键的组合在一起不重复
+```
+#### 添加唯一主键 - ALTER TABLE ... ADD/MODIFY 
+```mysql
 ALTER TABLE user ADD UNIQUE(name);
 ALTER TABLE user MODIFY name VARCHAR(20) UNIQUE;
-
--- 删除唯一主键 - ALTER TABLE ... DROP INDEX
+```
+#### 删除唯一主键 - ALTER TABLE ... DROP INDEX ...
+```mysql
 ALTER TABLE user DROP INDEX name;
 ```
 
-### 非空约束 - NOT NULL
+### 非空约束 - NOT NULL - 约束某个字段不能为空
 
 ```mysql
--- 约束某个字段不能为空
 CREATE TABLE user (
     id INT,
     name VARCHAR(20) NOT NULL
 );
+```
+#### 添加/删除非空约束
+```mysql
+ALTER TABLE user MODIFY name VARCHAR(20) NOT NULL;
 
--- 移除非空约束
 ALTER TABLE user MODIFY name VARCHAR(20);
 ```
 
-### 默认约束 - DEFAULT
+### 默认约束 - DEFAULT - 当插入某字段值的时候，如果没有传值，使用默认值
 
 ```mysql
--- 当插入某字段值的时候，如果没有传值，使用默认值
-
 CREATE TABLE user(
     id INT,
     name VARCHAR(20),
     age INT DEFAULT 10
 );
+```
 
--- 移除默认约束
+#### 删除默认约束
+```mysql
 ALTER TABLE user MODIFY age INT;
 ```
 
 ### 外键约束 - FOREIGN KEY
 
-```mysql
--- 副表中的FOREIGH KEY 指向主表中的PRIMARY KEY，在添加/删除数据时有限制：
--- 1. 主表中没有的数据值，副表不可以使用；
--- 2. 主表中的记录被副表引用时，主表不可以被删除。
+#### 副表中的FOREIGH KEY 指向主表中的PRIMARY KEY，在添加/删除数据时有限制：
+#### 1. 主表中没有的数据值，副表不可以使用；
+#### 2. 主表中的记录被副表引用时，主表不可以被删除。
 
+```mysql
 -- 班级表（主表）
 CREATE TABLE classes (
     id INT PRIMARY KEY,
@@ -227,13 +231,13 @@ CREATE TABLE students (
 
 ### 1NF
 
-只要字段值还可以继续拆分，就不满足第一范式。
+数据表中的所有字段都是不可分割的原子值。eg. 地址-“中国｜广东省｜深圳市｜南山区｜粤海大道｜100号｜”可拆分
 
-范式设计得越详细，对某些实际操作可能会更好，但并非都有好处，需要对项目的实际情况进行设定。
+范式设计得越详细，便于某些实际操作（统计），但并非都有好处，需要对实际项目的开发情况进行设定。
 
 ### 2NF
 
-在满足第一范式的前提下，其他列都必须完全依赖于主键列。如果出现不完全依赖，只可能发生在联合主键的情况下：
+在满足第一范式的前提下，其 他列都必须完全依赖于主键列。如果出现部分依赖，只可能发生在联合主键的情况下：
 
 ```mysql
 -- 订单表
@@ -245,10 +249,7 @@ CREATE TABLE myorder (
     PRIMARY KEY (product_id, customer_id)
 );
 ```
-
-实际上，在这张订单表中，`product_name` 只依赖于 `product_id` ，`customer_name` 只依赖于 `customer_id` 。也就是说，`product_name` 和 `customer_id` 是没用关系的，`customer_name` 和 `product_id` 也是没有关系的。
-
-这就不满足第二范式：其他列都必须完全依赖于主键列！
+问题：`product_name` 只依赖于 `product_id` ，`customer_name` 只依赖于 `customer_id` 。也就是说，除主键外的其他列，只依赖于主键的部分字段，不满足第二范式。
 
 ```mysql
 CREATE TABLE myorder (
