@@ -81,42 +81,77 @@ DATETIME()	日期和时间的组合。格式：YYYY-MM-DD HH:MM:SS
 
 ## 建表约束
 
-### 主键约束
+### 主键约束 -  PRIMARY KEY（列1）
 
 ```mysql
 -- 主键约束
--- 使某个字段不重复且不得为空，确保表内所有数据的唯一性。
+-- 使某列的值不重复且不得为空，确保表内所有数据的唯一性。
 CREATE TABLE user (
     id INT PRIMARY KEY,
     name VARCHAR(20)
 );
+# id 为主键，id不能重复且不为NULL
 
--- 联合主键
--- 联合主键中的每个字段都不能为空，并且加起来不能和已设置的联合主键重复。
+或
 CREATE TABLE user (
+    id INT ,
+    name VARCHAR(20)
+    PRIMARY KEY（id）
+);
+
+
+-- 联合主键 - PRIMARY KEY（列1，列2，...）
+-- 联合主键中的每列的值都不能为空，并且加起来不重复。可有多个列
+CREATE TABLE user4 (
     id INT,
     name VARCHAR(20),
     password VARCHAR(20),
     PRIMARY KEY(id, name)
 );
 
--- 自增约束
--- 自增约束的主键由系统自动递增分配。
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| id       | int         | NO   | PRI | NULL    |       |
+| name     | varchar(20) | NO   | PRI | NULL    |       |
+| password | varchar(20) | NO   |     | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+
+-- 自增约束 - AUTO_INCREMENT
+-- 自增约束的主键由系统自动递增生成。必须是主键才能自增
 CREATE TABLE user (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(20)
 );
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| id    | int         | NO   | PRI | NULL    | auto_increment |
+| name  | varchar(20) | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+
 
--- 添加主键约束
+insert into user(name) values('zs');
+insert into user(name) values('ab');
+insert into user(name) values('ab');
++----+------+
+| id | name |
++----+------+
+|  1 | zs   |
+|  2 | ab   |
+|  3 | ab   |
++----+------+
+
+-- 添加主键约束 - ALTER ... MODIFY/ADD
 -- 如果忘记设置主键，还可以通过SQL语句设置（两种方式）：
-ALTER TABLE user ADD PRIMARY KEY(id);
 ALTER TABLE user MODIFY id INT PRIMARY KEY;
+ALTER TABLE user ADD PRIMARY KEY(id,name);
 
--- 删除主键
-ALTER TABLE user drop PRIMARY KEY;
+
+-- 删除主键 - ALTER TABLE ...DROP PRIMARY KEY
+ALTER TABLE user DROP PRIMARY KEY;
 ```
 
-### 唯一主键
+### 唯一主键 - UNIQUE
 
 ```mysql
 -- 建表时创建唯一主键
@@ -124,21 +159,22 @@ CREATE TABLE user (
     id INT,
     name VARCHAR(20),
     UNIQUE(name)
-);
+); #name不能重复，但能有且仅有1个NULL
 
--- 添加唯一主键
+UNIQUE(name，id) #两个键在一起不重复
+
+-- 添加唯一主键 - ALTER TABLE ... ADD/MODIFY 
 -- 如果建表时没有设置唯一建，还可以通过SQL语句设置（两种方式）：
 ALTER TABLE user ADD UNIQUE(name);
 ALTER TABLE user MODIFY name VARCHAR(20) UNIQUE;
 
--- 删除唯一主键
+-- 删除唯一主键 - ALTER TABLE ... DROP INDEX
 ALTER TABLE user DROP INDEX name;
 ```
 
-### 非空约束
+### 非空约束 - NOT NULL
 
 ```mysql
--- 建表时添加非空约束
 -- 约束某个字段不能为空
 CREATE TABLE user (
     id INT,
@@ -149,42 +185,42 @@ CREATE TABLE user (
 ALTER TABLE user MODIFY name VARCHAR(20);
 ```
 
-### 默认约束
+### 默认约束 - DEFAULT
 
 ```mysql
--- 建表时添加默认约束
--- 约束某个字段的默认值
-CREATE TABLE user2 (
+-- 当插入某字段值的时候，如果没有传值，使用默认值
+
+CREATE TABLE user(
     id INT,
     name VARCHAR(20),
     age INT DEFAULT 10
 );
 
--- 移除非空约束
+-- 移除默认约束
 ALTER TABLE user MODIFY age INT;
 ```
 
-### 外键约束
+### 外键约束 - FOREIGN KEY
 
 ```mysql
--- 班级
+-- 副表中的FOREIGH KEY 指向主表中的PRIMARY KEY，在添加/删除数据时有限制：
+-- 1. 主表中没有的数据值，副表不可以使用；
+-- 2. 主表中的记录被副表引用时，主表不可以被删除。
+
+-- 班级表（主表）
 CREATE TABLE classes (
     id INT PRIMARY KEY,
     name VARCHAR(20)
 );
 
--- 学生表
+-- 学生表 （副表）
 CREATE TABLE students (
     id INT PRIMARY KEY,
     name VARCHAR(20),
-    -- 这里的 class_id 要和 classes 中的 id 字段相关联
-    class_id INT,
-    -- 表示 class_id 的值必须来自于 classes 中的 id 字段值
-    FOREIGN KEY(class_id) REFERENCES classes(id)
+    class_id INT, # 与classes 中的 id 字段相关联
+    FOREIGN KEY(class_id) REFERENCES classes(id) #class_id 的值必须来自于 classes表中的 id 字段值
 );
 
--- 1. 主表（父表）classes 中没有的数据值，在副表（子表）students 中，是不可以使用的；
--- 2. 主表中的记录被副表引用时，主表不可以被删除。
 ```
 
 ## 数据库的三大设计范式
@@ -298,9 +334,8 @@ CREATE TABLE teacher (
 CREATE TABLE course (
     no VARCHAR(20) PRIMARY KEY,
     name VARCHAR(20) NOT NULL,
-    t_no VARCHAR(20) NOT NULL, -- 教师编号
-    -- 表示该 tno 来自于 teacher 表中的 no 字段值
-    FOREIGN KEY(t_no) REFERENCES teacher(no) 
+    t_no VARCHAR(20) NOT NULL, # 教师编号
+    FOREIGN KEY(t_no) REFERENCES teacher(no) #tno 来自于 teacher 表中的 no 字段值
 );
 
 -- 成绩表
@@ -308,10 +343,8 @@ CREATE TABLE score (
     s_no VARCHAR(20) NOT NULL, -- 学生编号
     c_no VARCHAR(20) NOT NULL, -- 课程号
     degree DECIMAL,	-- 成绩
-    -- 表示该 s_no, c_no 分别来自于 student, course 表中的 no 字段值
     FOREIGN KEY(s_no) REFERENCES student(no),	
     FOREIGN KEY(c_no) REFERENCES course(no),
-    -- 设置 s_no, c_no 为联合主键
     PRIMARY KEY(s_no, c_no)
 );
 
@@ -359,51 +392,28 @@ SELECT * FROM student;
 SELECT * FROM teacher;
 ```
 
-### 1 到 10
+### 增删改查练习
 
 ```mysql
--- 查询 student 表的所有行
-SELECT * FROM student;
 
--- 查询 student 表中的 name、sex 和 class 字段的所有行
-SELECT name, sex, class FROM student;
-
--- 查询 teacher 表中不重复的 department 列
--- department: 去重查询
-SELECT DISTINCT department FROM teacher;
-
--- 查询 score 表中成绩在60-80之间的所有行（区间查询和运算符查询）
--- BETWEEN xx AND xx: 查询区间, AND 表示 "并且"
+-- 查询 score 表中degree在60-80之间的所有行
+-- BETWEEN xx AND xx: 查询区间
 SELECT * FROM score WHERE degree BETWEEN 60 AND 80;
-SELECT * FROM score WHERE degree > 60 AND degree < 80;
 
--- 查询 score 表中成绩为 85, 86 或 88 的行
--- IN: 查询规定中的多个值
+-- 查询 score 表中degree为 85, 86 或 88 的行
+-- IN: 表示“或者”关系的查询
 SELECT * FROM score WHERE degree IN (85, 86, 88);
 
--- 查询 student 表中 '95031' 班或性别为 '女' 的所有行
--- or: 表示或者关系
-SELECT * FROM student WHERE class = '95031' or sex = '女';
-
--- 以 class 降序的方式查询 student 表的所有行
--- DESC: 降序，从高到低
--- ASC（默认）: 升序，从低到高
-SELECT * FROM student ORDER BY class DESC;
-SELECT * FROM student ORDER BY class ASC;
-
--- 以 c_no 升序、degree 降序查询 score 表的所有行
-SELECT * FROM score ORDER BY c_no ASC, degree DESC;
 
 -- 查询 "95031" 班的学生人数
--- COUNT: 统计
+-- COUNT: 统计。 若count(列1)，不算NULL值。所以一般用count(*)。
 SELECT COUNT(*) FROM student WHERE class = '95031';
 
--- 查询 score 表中的最高分的学生学号和课程编号（子查询或排序查询）。
--- (SELECT MAX(degree) FROM score): 子查询，算出最高分
-SELECT s_no, c_no FROM score WHERE degree = (SELECT MAX(degree) FROM score);
+-- 查询 score 表中的最高分的学生学号和课程编号。
+1. 子查询: (SELECT MAX(degree) FROM score) = 算出最高分
+   SELECT s_no, c_no FROM score WHERE degree = (SELECT MAX(degree) FROM score);
 
---  排序查询
--- LIMIT r, n: 表示从第r行开始，查询n条数据
+2.  排序查询: order by ... limit r,n = 排序后从第r行开始，查询n条数据  = limit n offset r
 SELECT s_no, c_no, degree FROM score ORDER BY degree DESC LIMIT 0, 1;
 ```
 
