@@ -231,9 +231,9 @@ CREATE TABLE students (
 
 ### 1NF
 
-数据表中的所有字段都是不可分割的原子值。eg. 地址-“中国｜广东省｜深圳市｜南山区｜粤海大道｜100号｜”可拆分
+数据表中的所有字段都是不可分割的原子值。eg. 地址-“中国｜广东省｜深圳市｜南山区｜粤海大道｜100号｜”可拆分。
 
-范式设计得越详细，便于某些实际操作（统计），但并非都有好处，需要对实际项目的开发情况进行设定。
+范式设计得越详细，便于某些实际操作（eg.统计），但并非都有好处，需要对实际项目的开发情况进行设定。
 
 ### 2NF
 
@@ -250,6 +250,7 @@ CREATE TABLE myorder (
 );
 ```
 问题：`product_name` 只依赖于 `product_id` ，`customer_name` 只依赖于 `customer_id` 。也就是说，除主键外的其他列，只依赖于主键的部分字段，不满足第二范式。
+
 解决方法：拆表
 
 ```mysql
@@ -286,6 +287,7 @@ CREATE TABLE myorder (
 ```
 
 问题：表中的 `customer_phone` 依赖于非主键列`customer_id` ，不满足第三范式。
+
 解决方法：拆表
 
 ```mysql
@@ -306,9 +308,9 @@ CREATE TABLE customer (
 
 ## 查询练习
 
-### 准备数据
-
 ```mysql
+准备数据
+
 -- 创建数据库
 CREATE DATABASE select_test;
 -- 切换数据库
@@ -397,26 +399,29 @@ SELECT * FROM teacher;
 
 ### 增删改查练习
 
-
+1. 查询 score 表中degree在60-80之间的所有行
+   -- BETWEEN xx AND xx: 查询区间
 ```mysql
--- 查询 score 表中degree在60-80之间的所有行
--- BETWEEN xx AND xx: 查询区间
 SELECT * FROM score WHERE degree BETWEEN 60 AND 80;
-
--- 查询 score 表中degree为 85, 86 或 88 的行
--- IN: 表示“或者”关系的查询
+```
+2.  查询 score 表中degree为 85, 86 或 88 的行
+    -- IN: 表示“或者”关系的查询
+```mysql
 SELECT * FROM score WHERE degree IN (85, 86, 88);
-
-
--- 查询 "95031" 班的学生人数
--- COUNT: 统计。 若count(列1)，不算NULL值。所以一般用count(*)。
+```
+3.  查询 "95031" 班的学生人数
+    -- COUNT: 统计。 若count(列1)，不算NULL值。所以一般用count(*)。
+```mysql
 SELECT COUNT(*) FROM student WHERE class = '95031';
-
--- 查询 score 表中的最高分的学生学号和课程编号。
-1. 子查询: (SELECT MAX(degree) FROM score) = 算出最高分
+```
+4. 查询 score 表中的最高分的学生学号和课程编号。
+   -- 子查询: (SELECT MAX(degree) FROM score) = 算出最高分
+```
    SELECT s_no, c_no FROM score WHERE degree = (SELECT MAX(degree) FROM score);
+```
 
-2.  排序查询: order by ... limit r,n = 排序后从第r行开始，查询n条数据  = limit n offset r
+   -- 排序查询: order by ... limit r,n = 排序后从第r行开始，查询n条数据  = limit n offset r
+```mysql
 SELECT s_no, c_no, degree FROM score ORDER BY degree DESC LIMIT 0, 1;
 ```
 
