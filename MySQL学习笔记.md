@@ -426,64 +426,27 @@ SELECT s_no, c_no FROM score WHERE degree = (SELECT MAX(degree) FROM score);
 SELECT s_no, c_no, degree FROM score ORDER BY degree DESC LIMIT 0, 1;
 ```
 
-### 分组计算平均成绩
+### 分组查询练习
+- GROUP BY语句用来与聚合函数(aggregate functions such as COUNT, SUM, AVG, MIN, or MAX.)联合使用来得到一个或多个列的结果集。
+- HAVING语句通常与GROUP BY语句联合使用，用来过滤由GROUP BY语句返回的记录集。HAVING语句的存在弥补了WHERE关键字不能与聚合函数联合使用的不足。
 
-**查询每门课的平均成绩。**
+1.查询每门课的平均成绩。
 
 ```mysql
--- AVG: 平均值
-SELECT AVG(degree) FROM score WHERE c_no = '3-105';
-SELECT AVG(degree) FROM score WHERE c_no = '3-245';
-SELECT AVG(degree) FROM score WHERE c_no = '6-166';
-
--- GROUP BY: 分组查询
 SELECT c_no, AVG(degree) FROM score GROUP BY c_no;
 ```
 
-### 分组条件与模糊查询
-
-**查询 `score` 表中至少有 2 名学生选修，并以 3 开头的课程的平均分数。**
+2.查询 `score` 表中至少有 2 名学生选修，并以 3 开头的课程的平均分数。
 
 ```mysql
-SELECT * FROM score;
--- c_no 课程编号
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-105 |     92 |
-| 103  | 3-245 |     86 |
-| 103  | 6-166 |     85 |
-| 105  | 3-105 |     88 |
-| 105  | 3-245 |     75 |
-| 105  | 6-166 |     79 |
-| 109  | 3-105 |     76 |
-| 109  | 3-245 |     68 |
-| 109  | 6-166 |     81 |
-+------+-------+--------+
-```
-
-分析表发现，至少有 2 名学生选修的课程是 `3-105` 、`3-245` 、`6-166` ，以 3 开头的课程是 `3-105` 、`3-245` 。也就是说，我们要查询所有 `3-105` 和 `3-245` 的 `degree` 平均分。
-
-```mysql
--- 首先把 c_no, AVG(degree) 通过分组查询出来
-SELECT c_no, AVG(degree) FROM score GROUP BY c_no
-+-------+-------------+
-| c_no  | AVG(degree) |
-+-------+-------------+
-| 3-105 |     85.3333 |
-| 3-245 |     76.3333 |
-| 6-166 |     81.6667 |
-+-------+-------------+
-
--- 再查询出至少有 2 名学生选修的课程
+-- 查询出至少有 2 名学生选修的课程
 -- HAVING: 表示持有
 HAVING COUNT(c_no) >= 2
 
--- 并且是以 3 开头的课程
+-- 查询以 3 开头的课程
 -- LIKE 表示模糊查询，"%" 是一个通配符，匹配 "3" 后面的任意字符。
 AND c_no LIKE '3%';
 
--- 把前面的SQL语句拼接起来，
 -- 后面加上一个 COUNT(*)，表示将每个分组的个数也查询出来。
 SELECT c_no, AVG(degree), COUNT(*) FROM score GROUP BY c_no
 HAVING COUNT(c_no) >= 2 AND c_no LIKE '3%';
@@ -497,7 +460,7 @@ HAVING COUNT(c_no) >= 2 AND c_no LIKE '3%';
 
 ### 多表查询 - 1
 
-**查询所有学生的 `name`，以及该学生在 `score` 表中对应的 `c_no` 和 `degree` 。**
+**查询所有学生的 `name`，以及该学生在 `score` 表中对应的 `c_no` 和 `degree` 
 
 ```mysql
 SELECT no, name FROM student;
