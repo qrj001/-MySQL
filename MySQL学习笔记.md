@@ -426,6 +426,28 @@ SELECT s_no, c_no FROM score WHERE degree = (SELECT MAX(degree) FROM score);
 SELECT s_no, c_no, degree FROM score ORDER BY degree DESC LIMIT 0, 1;
 ```
 
+5.查询 `student` 表中每个学生的姓名和年龄。
+
+```mysql
+-- 年龄 = 当前年份-出生年份 = YEAR(NOW()) - YEAR(birthday)
+SELECT name, YEAR(NOW()) - YEAR(birthday) as age FROM student;
++-----------+------+
+| name      | age  |
++-----------+------+
+| 曾华      |   42 |
+| 匡明      |   44 |
+| 王丽      |   43 |
+| 李军      |   43 |
+| 王芳      |   44 |
+| 陆军      |   45 |
+| 王尼玛    |   43 |
+| 张全蛋    |   44 |
+| 赵铁柱    |   45 |
+| 张飞      |   45 |
++-----------+------+
+```
+
+
 ### 分组查询练习
 - GROUP BY语句用来与聚合函数(aggregate functions such as COUNT, SUM, AVG, MIN, or MAX.)联合使用来得到一个或多个列的结果集。
 - HAVING语句通常与GROUP BY语句联合使用，用来过滤由GROUP BY语句返回的记录集。HAVING语句的存在弥补了WHERE关键字不能与聚合函数联合使用的不足。
@@ -445,6 +467,7 @@ HAVING COUNT(c_no) >= 2
 
 -- 查询以 3 开头的课程
 -- LIKE 表示模糊查询，"%" 是一个通配符，匹配 "3" 后面的任意字符。
+-- NOT LIKE 模糊查询取反
 AND c_no LIKE '3%';
 
 -- 后面加上一个 COUNT(*)，表示将每个分组的个数也查询出来。
@@ -458,192 +481,38 @@ HAVING COUNT(c_no) >= 2 AND c_no LIKE '3%';
 +-------+-------------+----------+
 ```
 
-### 多表查询 - 1
+### 多表查询
 
-**查询所有学生的 `name`，以及该学生在 `score` 表中对应的 `c_no` 和 `degree` 
-
-```mysql
-SELECT no, name FROM student;
-+-----+-----------+
-| no  | name      |
-+-----+-----------+
-| 101 | 曾华      |
-| 102 | 匡明      |
-| 103 | 王丽      |
-| 104 | 李军      |
-| 105 | 王芳      |
-| 106 | 陆军      |
-| 107 | 王尼玛    |
-| 108 | 张全蛋    |
-| 109 | 赵铁柱    |
-+-----+-----------+
-
-SELECT s_no, c_no, degree FROM score;
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-105 |     92 |
-| 103  | 3-245 |     86 |
-| 103  | 6-166 |     85 |
-| 105  | 3-105 |     88 |
-| 105  | 3-245 |     75 |
-| 105  | 6-166 |     79 |
-| 109  | 3-105 |     76 |
-| 109  | 3-245 |     68 |
-| 109  | 6-166 |     81 |
-+------+-------+--------+
-```
-
-通过分析可以发现，只要把 `score` 表中的 `s_no` 字段值替换成 `student` 表中对应的 `name` 字段值就可以了，如何做呢？
+1. 查询所有学生的 `name`，以及该学生在 `score` 表中对应的 `c_no` 和 `degree` 
 
 ```mysql
--- FROM...: 表示从 student, score 表中查询
--- WHERE 的条件表示为，只有在 student.no 和 score.s_no 相等时才显示出来。
+name -> student
+c_no,degree -> score
+通过primary key 关联两张表
+
 SELECT name, c_no, degree FROM student, score 
 WHERE student.no = score.s_no;
-+-----------+-------+--------+
-| name      | c_no  | degree |
-+-----------+-------+--------+
-| 王丽      | 3-105 |     92 |
-| 王丽      | 3-245 |     86 |
-| 王丽      | 6-166 |     85 |
-| 王芳      | 3-105 |     88 |
-| 王芳      | 3-245 |     75 |
-| 王芳      | 6-166 |     79 |
-| 赵铁柱    | 3-105 |     76 |
-| 赵铁柱    | 3-245 |     68 |
-| 赵铁柱    | 6-166 |     81 |
-+-----------+-------+--------+
 ```
 
-### 多表查询 - 2
-
-**查询所有学生的 `no` 、课程名称 ( `course` 表中的 `name` ) 和成绩 ( `score` 表中的 `degree` ) 列。**
-
-只有 `score` 关联学生的 `no` ，因此只要查询 `score` 表，就能找出所有和学生相关的 `no` 和 `degree` ：
+2. 查询所有学生的 `name` 、课程名称 ( `course` 表中的 `name` ) 和成绩 ( `score` 表中的 `degree` ) 列。
 
 ```mysql
-SELECT s_no, c_no, degree FROM score;
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-105 |     92 |
-| 103  | 3-245 |     86 |
-| 103  | 6-166 |     85 |
-| 105  | 3-105 |     88 |
-| 105  | 3-245 |     75 |
-| 105  | 6-166 |     79 |
-| 109  | 3-105 |     76 |
-| 109  | 3-245 |     68 |
-| 109  | 6-166 |     81 |
-+------+-------+--------+
-```
+三表关联方法：用and，分别关联2张表
 
-然后查询 `course` 表：
-
-```mysql
-+-------+-----------------+
-| no    | name            |
-+-------+-----------------+
-| 3-105 | 计算机导论      |
-| 3-245 | 操作系统        |
-| 6-166 | 数字电路        |
-| 9-888 | 高等数学        |
-+-------+-----------------+
-```
-
-只要把 `score` 表中的 `c_no` 替换成 `course` 表中对应的 `name` 字段值就可以了。
-
-```mysql
--- 增加一个查询字段 name，分别从 score、course 这两个表中查询。
--- as 表示取一个该字段的别名。
-SELECT s_no, name as c_name, degree FROM score, course
-WHERE score.c_no = course.no;
-+------+-----------------+--------+
-| s_no | c_name          | degree |
-+------+-----------------+--------+
-| 103  | 计算机导论      |     92 |
-| 105  | 计算机导论      |     88 |
-| 109  | 计算机导论      |     76 |
-| 103  | 操作系统        |     86 |
-| 105  | 操作系统        |     75 |
-| 109  | 操作系统        |     68 |
-| 103  | 数字电路        |     85 |
-| 105  | 数字电路        |     79 |
-| 109  | 数字电路        |     81 |
-+------+-----------------+--------+
-```
-
-### 三表关联查询
-
-**查询所有学生的 `name` 、课程名 ( `course` 表中的 `name` ) 和 `degree` 。**
-
-只有 `score` 表中关联学生的学号和课堂号，我们只要围绕着 `score` 这张表查询就好了。
-
-```mysql
-SELECT * FROM score;
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-105 |     92 |
-| 103  | 3-245 |     86 |
-| 103  | 6-166 |     85 |
-| 105  | 3-105 |     88 |
-| 105  | 3-245 |     75 |
-| 105  | 6-166 |     79 |
-| 109  | 3-105 |     76 |
-| 109  | 3-245 |     68 |
-| 109  | 6-166 |     81 |
-+------+-------+--------+
-```
-
-只要把 `s_no` 和 `c_no` 替换成 `student` 和 `srouse` 表中对应的 `name` 字段值就好了。
-
-首先把 `s_no` 替换成 `student` 表中的 `name` 字段：
-
-```mysql
-SELECT name, c_no, degree FROM student, score WHERE student.no = score.s_no;
-+-----------+-------+--------+
-| name      | c_no  | degree |
-+-----------+-------+--------+
-| 王丽      | 3-105 |     92 |
-| 王丽      | 3-245 |     86 |
-| 王丽      | 6-166 |     85 |
-| 王芳      | 3-105 |     88 |
-| 王芳      | 3-245 |     75 |
-| 王芳      | 6-166 |     79 |
-| 赵铁柱    | 3-105 |     76 |
-| 赵铁柱    | 3-245 |     68 |
-| 赵铁柱    | 6-166 |     81 |
-+-----------+-------+--------+
-```
-
-再把 `c_no` 替换成 `course` 表中的 `name` 字段：
-
-```mysql
--- 课程表
-SELECT no, name FROM course;
-+-------+-----------------+
-| no    | name            |
-+-------+-----------------+
-| 3-105 | 计算机导论      |
-| 3-245 | 操作系统        |
-| 6-166 | 数字电路        |
-| 9-888 | 高等数学        |
-+-------+-----------------+
+score: s_no, c_no, degree 
+course: no, name
+student: no,name,sex,birthday,class
 
 -- 由于字段名存在重复，使用 "表名.字段名 as 别名" 代替。
 SELECT student.name as s_name, course.name as c_name, degree 
 FROM student, score, course
-WHERE student.NO = score.s_no
+WHERE student.no = score.s_no
 AND score.c_no = course.no;
 ```
 
-### 子查询加分组求平均分
+### 子查询
 
-**查询 `95031` 班学生每门课程的平均成绩。**
-
-在 `score` 表中根据 `student`  表的学生编号筛选出学生的课堂号和成绩：
+1. 查询 `95031` 班学生每门课程的平均成绩。
 
 ```mysql
 -- IN (..): 将筛选出的学生号当做 s_no 的条件查询
@@ -659,11 +528,9 @@ WHERE s_no IN (SELECT no FROM student WHERE class = '95031');
 | 109  | 3-245 |     68 |
 | 109  | 6-166 |     81 |
 +------+-------+--------+
-```
 
 这时只要将 `c_no` 分组一下就能得出 `95031` 班学生每门课的平均成绩：
 
-```mysql
 SELECT c_no, AVG(degree) FROM score
 WHERE s_no IN (SELECT no FROM student WHERE class = '95031')
 GROUP BY c_no;
@@ -676,57 +543,39 @@ GROUP BY c_no;
 +-------+-------------+
 ```
 
-### 子查询 - 1
-
-**查询在 `3-105` 课程中，所有成绩高于 `109` 号同学的记录。**
-
-首先筛选出课堂号为 `3-105` ，在找出所有成绩高于 `109` 号同学的的行。
+2. 查询在 `3-105` 课程中，比 `109` 号同学分数高的同学。
 
 ```mysql
+首先找到 3-105，109号同学的分数。
+SELECT degree FROM score WHERE s_no = '109' AND c_no = '3-105'
+
+再筛选出课堂号为 `3-105` ，在找出所有成绩高于 `109` 号同学的的行。
 SELECT * FROM score 
 WHERE c_no = '3-105'
 AND degree > (SELECT degree FROM score WHERE s_no = '109' AND c_no = '3-105');
 ```
 
-### 子查询 - 2
-
-**查询所有成绩高于 `109` 号同学的 `3-105` 课程成绩记录。**
-
-```mysql
--- 不限制课程号，只要成绩大于109号同学的3-105课程成绩就可以。
-SELECT * FROM score
-WHERE degree > (SELECT degree FROM score WHERE s_no = '109' AND c_no = '3-105');
-```
-
-### YEAR 函数与带 IN 关键字查询
-
-**查询所有和 `101` 、`108` 号学生同年出生的 `no` 、`name` 、`birthday` 列。**
+3. 查询所有和 `101` 、`108` 号学生同年出生的 `no` 、`name` 、`birthday` 列。
 
 ```mysql
 -- YEAR(..): 取出日期中的年份
-SELECT no, name, birthday FROM student
+首先找到101，108号同学出生的年份
+SELECT YEAR(birthday) FROM student WHERE no IN (101, 108)
+找到对应的同学
+SELECT * FROM student
 WHERE YEAR(birthday) IN (SELECT YEAR(birthday) FROM student WHERE no IN (101, 108));
 ```
 
-### 多层嵌套子查询
-
-**查询 `'张旭'` 教师任课的学生成绩表。**
-
-首先找到教师编号：
+4. 查询 `'张旭'` 教师任课的学生成绩表。
 
 ```mysql
+首先找到教师编号：
 SELECT NO FROM teacher WHERE NAME = '张旭'
-```
 
 通过 `sourse` 表找到该教师课程号：
-
-```mysql
-SELECT NO FROM course WHERE t_no = ( SELECT NO FROM teacher WHERE NAME = '张旭' );
-```
+select * from course where t_no = (select no from teacher where name = '张旭');
 
 通过筛选出的课程号查询成绩表：
-
-```mysql
 SELECT * FROM score WHERE c_no = (
     SELECT no FROM course WHERE t_no = ( 
         SELECT no FROM teacher WHERE NAME = '张旭' 
@@ -734,237 +583,77 @@ SELECT * FROM score WHERE c_no = (
 );
 ```
 
-### 多表查询
-
-**查询某选修课程多于5个同学的教师姓名。**
-
-首先在 `teacher` 表中，根据 `no` 字段来判断该教师的同一门课程是否有至少5名学员选修：
+5. 查询某课程多于5个同学的教师姓名。
 
 ```mysql
--- 查询 teacher 表
-SELECT no, name FROM teacher;
-+-----+--------+
-| no  | name   |
-+-----+--------+
-| 804 | 李诚   |
-| 825 | 王萍   |
-| 831 | 刘冰   |
-| 856 | 张旭   |
-+-----+--------+
+插入新数据：
+INSERT INTO score VALUES('101', '3-105', '90');
+INSERT INTO score VALUES('102', '3-105', '91');
+INSERT INTO score VALUES('104', '3-105', '89');
 
-SELECT name FROM teacher WHERE no IN (
-    -- 在这里找到对应的条件
-);
-```
+首先查询各门课的学生人数：
+select c_no, count(*) from score group by c_no;
++-------+----------+
+| c_no  | count(*) |
++-------+----------+
+| 3-105 |        6 |
+| 3-245 |        3 |
+| 6-166 |        3 |
++-------+----------+
 
-查看和教师编号有有关的表的信息：
-
-```mysql
-SELECT * FROM course;
--- t_no: 教师编号
-+-------+-----------------+------+
-| no    | name            | t_no |
-+-------+-----------------+------+
-| 3-105 | 计算机导论      | 825  |
-| 3-245 | 操作系统        | 804  |
-| 6-166 | 数字电路        | 856  |
-| 9-888 | 高等数学        | 831  |
-+-------+-----------------+------+
-```
-
-我们已经找到和教师编号有关的字段就在 `course` 表中，但是还无法知道哪门课程至少有5名学生选修，所以还需要根据 `score` 表来查询：
-
-```mysql
--- 在此之前向 score 插入一些数据，以便丰富查询条件。
-INSERT INTO score VALUES ('101', '3-105', '90');
-INSERT INTO score VALUES ('102', '3-105', '91');
-INSERT INTO score VALUES ('104', '3-105', '89');
-
--- 查询 score 表
-SELECT * FROM score;
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 101  | 3-105 |     90 |
-| 102  | 3-105 |     91 |
-| 103  | 3-105 |     92 |
-| 103  | 3-245 |     86 |
-| 103  | 6-166 |     85 |
-| 104  | 3-105 |     89 |
-| 105  | 3-105 |     88 |
-| 105  | 3-245 |     75 |
-| 105  | 6-166 |     79 |
-| 109  | 3-105 |     76 |
-| 109  | 3-245 |     68 |
-| 109  | 6-166 |     81 |
-+------+-------+--------+
-
--- 在 score 表中将 c_no 作为分组，并且限制 c_no 持有至少 5 条数据。
-SELECT c_no FROM score GROUP BY c_no HAVING COUNT(*) > 5;
+选出超过5人的课程号：
+select c_no from score group by c_no having count(*)>5;
 +-------+
 | c_no  |
 +-------+
 | 3-105 |
 +-------+
-```
 
-根据筛选出来的课程号，找出在某课程中，拥有至少5名学员的教师编号：
-
-```mysql
-SELECT t_no FROM course WHERE no IN (
-    SELECT c_no FROM score GROUP BY c_no HAVING COUNT(*) > 5
-);
+选出（超过5人的课程号）对应的t_no
+select t_no from course where no = (select c_no from score group by c_no having count(*)>5);
 +------+
 | t_no |
 +------+
 | 825  |
 +------+
+
+选出（超过5人的课程号）对应的t_no 对应的姓名
+select name from teacher where no = (select t_no from course where no = (select c_no from score group by c_no having count(*)>5));
++--------+
+| name   |
++--------+
+| 王萍   |
++--------+
 ```
 
-在 `teacher` 表中，根据筛选出来的教师编号找到教师姓名：
+### 交并集的使用
+
+1. 排除同一职称下 `计算机系` 与 `电子工程系` 的教师。
++-----+--------+-----+------------+------------+-----------------+
+| no  | name   | sex | birthday   | profession | department      |
++-----+--------+-----+------------+------------+-----------------+
+| 804 | 李诚   | 男  | 1958-12-02 | 副教授     | 计算机系        |
+| 825 | 王萍   | 女  | 1972-05-05 | 助教       | 计算机系        |
+| 831 | 刘冰   | 女  | 1977-08-14 | 助教       | 电子工程系      |
+| 856 | 张旭   | 男  | 1969-03-12 | 讲师       | 电子工程系      |
++-----+--------+-----+------------+------------+-----------------+
+结果输出 （李诚，张旭）
 
 ```mysql
-SELECT name FROM teacher WHERE no IN (
-    -- 最终条件
-    SELECT t_no FROM course WHERE no IN (
-        SELECT c_no FROM score GROUP BY c_no HAVING COUNT(*) > 5
-    )
-);
-```
 
-### 子查询 - 3
-
-**查询 “计算机系” 课程的成绩表。**
-
-思路是，先找出 `course` 表中所有 `计算机系` 课程的编号，然后根据这个编号查询 `score` 表。
-
-```mysql
--- 通过 teacher 表查询所有 `计算机系` 的教师编号
-SELECT no, name, department FROM teacher WHERE department = '计算机系'
-+-----+--------+--------------+
-| no  | name   | department   |
-+-----+--------+--------------+
-| 804 | 李诚   | 计算机系     |
-| 825 | 王萍   | 计算机系     |
-+-----+--------+--------------+
-
--- 通过 course 表查询该教师的课程编号
-SELECT no FROM course WHERE t_no IN (
-    SELECT no FROM teacher WHERE department = '计算机系'
-);
-+-------+
-| no    |
-+-------+
-| 3-245 |
-| 3-105 |
-+-------+
-
--- 根据筛选出来的课程号查询成绩表
-SELECT * FROM score WHERE c_no IN (
-    SELECT no FROM course WHERE t_no IN (
-        SELECT no FROM teacher WHERE department = '计算机系'
-    )
-);
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-245 |     86 |
-| 105  | 3-245 |     75 |
-| 109  | 3-245 |     68 |
-| 101  | 3-105 |     90 |
-| 102  | 3-105 |     91 |
-| 103  | 3-105 |     92 |
-| 104  | 3-105 |     89 |
-| 105  | 3-105 |     88 |
-| 109  | 3-105 |     76 |
-+------+-------+--------+
-```
-
-### UNION 和 NOTIN 的使用
-
-**查询 `计算机系` 与 `电子工程系` 中的不同职称的教师。**
-
-```mysql
--- NOT: 代表逻辑非
 SELECT * FROM teacher WHERE department = '计算机系' AND profession NOT IN (
     SELECT profession FROM teacher WHERE department = '电子工程系'
 )
--- 合并两个集
 UNION
 SELECT * FROM teacher WHERE department = '电子工程系' AND profession NOT IN (
     SELECT profession FROM teacher WHERE department = '计算机系'
 );
 ```
 
-### ANY 表示至少一个 - DESC ( 降序 )
-
-**查询课程 `3-105` 且成绩 <u>至少</u> 高于 `3-245` 的 `score` 表。**
-
-```mysql
-SELECT * FROM score WHERE c_no = '3-105';
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 101  | 3-105 |     90 |
-| 102  | 3-105 |     91 |
-| 103  | 3-105 |     92 |
-| 104  | 3-105 |     89 |
-| 105  | 3-105 |     88 |
-| 109  | 3-105 |     76 |
-+------+-------+--------+
-
-SELECT * FROM score WHERE c_no = '3-245';
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-245 |     86 |
-| 105  | 3-245 |     75 |
-| 109  | 3-245 |     68 |
-+------+-------+--------+
-
--- ANY: 符合SQL语句中的任意条件。
--- 也就是说，在 3-105 成绩中，只要有一个大于从 3-245 筛选出来的任意行就符合条件，
--- 最后根据降序查询结果。
-SELECT * FROM score WHERE c_no = '3-105' AND degree > ANY(
-    SELECT degree FROM score WHERE c_no = '3-245'
-) ORDER BY degree DESC;
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-105 |     92 |
-| 102  | 3-105 |     91 |
-| 101  | 3-105 |     90 |
-| 104  | 3-105 |     89 |
-| 105  | 3-105 |     88 |
-| 109  | 3-105 |     76 |
-+------+-------+--------+
-```
-
-### 表示所有的 ALL
-
-**查询课程 `3-105` 且成绩高于 `3-245` 的 `score` 表。**
-
-```mysql
--- 只需对上一道题稍作修改。
--- ALL: 符合SQL语句中的所有条件。
--- 也就是说，在 3-105 每一行成绩中，都要大于从 3-245 筛选出来全部行才算符合条件。
-SELECT * FROM score WHERE c_no = '3-105' AND degree > ALL(
-    SELECT degree FROM score WHERE c_no = '3-245'
-);
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 101  | 3-105 |     90 |
-| 102  | 3-105 |     91 |
-| 103  | 3-105 |     92 |
-| 104  | 3-105 |     89 |
-| 105  | 3-105 |     88 |
-+------+-------+--------+
-```
 
 ### 复制表的数据作为条件查询
 
-**查询某课程成绩比该课程平均成绩低的 `score` 表。**
+1. 查询某课程成绩比该课程平均成绩低的 `score` 表
 
 ```mysql
 -- 查询平均分
@@ -977,24 +666,6 @@ SELECT c_no, AVG(degree) FROM score GROUP BY c_no;
 | 6-166 |     81.6667 |
 +-------+-------------+
 
--- 查询 score 表
-SELECT degree FROM score;
-+--------+
-| degree |
-+--------+
-|     90 |
-|     91 |
-|     92 |
-|     86 |
-|     85 |
-|     89 |
-|     88 |
-|     75 |
-|     79 |
-|     76 |
-|     68 |
-|     81 |
-+--------+
 
 -- 将表 b 作用于表 a 中查询数据
 -- score a (b): 将表声明为 a (b)，
@@ -1013,236 +684,6 @@ SELECT * FROM score a WHERE degree < (
 +------+-------+--------+
 ```
 
-### 子查询 - 4
-
-**查询所有任课 ( 在 `course` 表里有课程 ) 教师的 `name` 和 `department`** 。
-
-```mysql
-SELECT name, department FROM teacher WHERE no IN (SELECT t_no FROM course);
-+--------+-----------------+
-| name   | department      |
-+--------+-----------------+
-| 李诚   | 计算机系        |
-| 王萍   | 计算机系        |
-| 刘冰   | 电子工程系      |
-| 张旭   | 电子工程系      |
-+--------+-----------------+
-```
-
-### 条件加组筛选
-
-**查询 `student` 表中至少有 2 名男生的 `class` 。**
-
-```mysql
--- 查看学生表信息
-SELECT * FROM student;
-+-----+-----------+-----+------------+-------+
-| no  | name      | sex | birthday   | class |
-+-----+-----------+-----+------------+-------+
-| 101 | 曾华      | 男  | 1977-09-01 | 95033 |
-| 102 | 匡明      | 男  | 1975-10-02 | 95031 |
-| 103 | 王丽      | 女  | 1976-01-23 | 95033 |
-| 104 | 李军      | 男  | 1976-02-20 | 95033 |
-| 105 | 王芳      | 女  | 1975-02-10 | 95031 |
-| 106 | 陆军      | 男  | 1974-06-03 | 95031 |
-| 107 | 王尼玛    | 男  | 1976-02-20 | 95033 |
-| 108 | 张全蛋    | 男  | 1975-02-10 | 95031 |
-| 109 | 赵铁柱    | 男  | 1974-06-03 | 95031 |
-| 110 | 张飞      | 男  | 1974-06-03 | 95038 |
-+-----+-----------+-----+------------+-------+
-
--- 只查询性别为男，然后按 class 分组，并限制 class 行大于 1。
-SELECT class FROM student WHERE sex = '男' GROUP BY class HAVING COUNT(*) > 1;
-+-------+
-| class |
-+-------+
-| 95033 |
-| 95031 |
-+-------+
-```
-
-### NOTLIKE 模糊查询取反
-
-**查询 `student` 表中不姓 "王" 的同学记录。**
-
-```mysql
--- NOT: 取反
--- LIKE: 模糊查询
-mysql> SELECT * FROM student WHERE name NOT LIKE '王%';
-+-----+-----------+-----+------------+-------+
-| no  | name      | sex | birthday   | class |
-+-----+-----------+-----+------------+-------+
-| 101 | 曾华      | 男  | 1977-09-01 | 95033 |
-| 102 | 匡明      | 男  | 1975-10-02 | 95031 |
-| 104 | 李军      | 男  | 1976-02-20 | 95033 |
-| 106 | 陆军      | 男  | 1974-06-03 | 95031 |
-| 108 | 张全蛋    | 男  | 1975-02-10 | 95031 |
-| 109 | 赵铁柱    | 男  | 1974-06-03 | 95031 |
-| 110 | 张飞      | 男  | 1974-06-03 | 95038 |
-+-----+-----------+-----+------------+-------+
-```
-
-### YEAR 与 NOW 函数
-
-**查询 `student` 表中每个学生的姓名和年龄。**
-
-```mysql
--- 使用函数 YEAR(NOW()) 计算出当前年份，减去出生年份后得出年龄。
-SELECT name, YEAR(NOW()) - YEAR(birthday) as age FROM student;
-+-----------+------+
-| name      | age  |
-+-----------+------+
-| 曾华      |   42 |
-| 匡明      |   44 |
-| 王丽      |   43 |
-| 李军      |   43 |
-| 王芳      |   44 |
-| 陆军      |   45 |
-| 王尼玛    |   43 |
-| 张全蛋    |   44 |
-| 赵铁柱    |   45 |
-| 张飞      |   45 |
-+-----------+------+
-```
-
-### MAX 与 MIN 函数
-
-**查询 `student` 表中最大和最小的 `birthday` 值。**
-
-```mysql
-SELECT MAX(birthday), MIN(birthday) FROM student;
-+---------------+---------------+
-| MAX(birthday) | MIN(birthday) |
-+---------------+---------------+
-| 1977-09-01    | 1974-06-03    |
-+---------------+---------------+
-```
-
-### 多段排序
-
-**以 `class` 和 `birthday` 从大到小的顺序查询 `student` 表。**
-
-```mysql
-SELECT * FROM student ORDER BY class DESC, birthday;
-+-----+-----------+-----+------------+-------+
-| no  | name      | sex | birthday   | class |
-+-----+-----------+-----+------------+-------+
-| 110 | 张飞      | 男  | 1974-06-03 | 95038 |
-| 103 | 王丽      | 女  | 1976-01-23 | 95033 |
-| 104 | 李军      | 男  | 1976-02-20 | 95033 |
-| 107 | 王尼玛    | 男  | 1976-02-20 | 95033 |
-| 101 | 曾华      | 男  | 1977-09-01 | 95033 |
-| 106 | 陆军      | 男  | 1974-06-03 | 95031 |
-| 109 | 赵铁柱    | 男  | 1974-06-03 | 95031 |
-| 105 | 王芳      | 女  | 1975-02-10 | 95031 |
-| 108 | 张全蛋    | 男  | 1975-02-10 | 95031 |
-| 102 | 匡明      | 男  | 1975-10-02 | 95031 |
-+-----+-----------+-----+------------+-------+
-```
-
-### 子查询 - 5
-
-**查询 "男" 教师及其所上的课程。**
-
-```mysql
-SELECT * FROM course WHERE t_no in (SELECT no FROM teacher WHERE sex = '男');
-+-------+--------------+------+
-| no    | name         | t_no |
-+-------+--------------+------+
-| 3-245 | 操作系统     | 804  |
-| 6-166 | 数字电路     | 856  |
-+-------+--------------+------+
-```
-
-### MAX 函数与子查询
-
-**查询最高分同学的 `score` 表。**
-
-```mysql
--- 找出最高成绩（该查询只能有一个结果）
-SELECT MAX(degree) FROM score;
-
--- 根据上面的条件筛选出所有最高成绩表，
--- 该查询可能有多个结果，假设 degree 值多次符合条件。
-SELECT * FROM score WHERE degree = (SELECT MAX(degree) FROM score);
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 103  | 3-105 |     92 |
-+------+-------+--------+
-```
-
-### 子查询 - 6
-
-**查询和 "李军" 同性别的所有同学 `name` 。**
-
-```mysql
--- 首先将李军的性别作为条件取出来
-SELECT sex FROM student WHERE name = '李军';
-+-----+
-| sex |
-+-----+
-| 男  |
-+-----+
-
--- 根据性别查询 name 和 sex
-SELECT name, sex FROM student WHERE sex = (
-    SELECT sex FROM student WHERE name = '李军'
-);
-+-----------+-----+
-| name      | sex |
-+-----------+-----+
-| 曾华      | 男  |
-| 匡明      | 男  |
-| 李军      | 男  |
-| 陆军      | 男  |
-| 王尼玛    | 男  |
-| 张全蛋    | 男  |
-| 赵铁柱    | 男  |
-| 张飞      | 男  |
-+-----------+-----+
-```
-
-### 子查询 - 7
-
-**查询和 "李军" 同性别且同班的同学 `name` 。**
-
-```mysql
-SELECT name, sex, class FROM student WHERE sex = (
-    SELECT sex FROM student WHERE name = '李军'
-) AND class = (
-    SELECT class FROM student WHERE name = '李军'
-);
-+-----------+-----+-------+
-| name      | sex | class |
-+-----------+-----+-------+
-| 曾华      | 男  | 95033 |
-| 李军      | 男  | 95033 |
-| 王尼玛    | 男  | 95033 |
-+-----------+-----+-------+
-```
-
-### 子查询 - 8
-
-**查询所有选修 "计算机导论" 课程的 "男" 同学成绩表。**
-
-需要的 "计算机导论" 和性别为 "男" 的编号可以在 `course` 和 `student` 表中找到。
-
-```mysql
-SELECT * FROM score WHERE c_no = (
-    SELECT no FROM course WHERE name = '计算机导论'
-) AND s_no IN (
-    SELECT no FROM student WHERE sex = '男'
-);
-+------+-------+--------+
-| s_no | c_no  | degree |
-+------+-------+--------+
-| 101  | 3-105 |     90 |
-| 102  | 3-105 |     91 |
-| 104  | 3-105 |     89 |
-| 109  | 3-105 |     76 |
-+------+-------+--------+
-```
 
 ### 按等级查询
 
