@@ -745,6 +745,7 @@ WHERE degree BETWEEN low AND upp;
 
 ```mysql
 CREATE DATABASE testJoin;
+USE testJoin;
 
 CREATE TABLE person (
     id INT,
@@ -782,13 +783,10 @@ SELECT * FROM person;
 
 分析两张表发现，`person` 表并没有为 `cardId` 字段设置一个在 `card` 表中对应的 `id` 外键。如果设置了的话，`person` 中 `cardId` 字段值为 `6` 的行就插不进去，因为该 `cardId` 值在 `card` 表中并没有。
 
-#### 内连接
-
+#### 内连接 INNER JOIN = JOIN
 要查询这两张表中有关系的数据，可以使用 `INNER JOIN` ( 内连接 ) 将它们连接在一起。
 
 ```mysql
--- INNER JOIN: 表示为内连接，将两张表拼接在一起。
--- on: 表示要执行某个条件。
 SELECT * FROM person INNER JOIN card on person.cardId = card.id;
 +------+--------+--------+------+-----------+
 | id   | name   | cardId | id   | name      |
@@ -796,19 +794,13 @@ SELECT * FROM person INNER JOIN card on person.cardId = card.id;
 |    1 | 张三   |      1 |    1 | 饭卡      |
 |    2 | 李四   |      3 |    3 | 农行卡    |
 +------+--------+--------+------+-----------+
-
--- 将 INNER 关键字省略掉，结果也是一样的。
--- SELECT * FROM person JOIN card on person.cardId = card.id;
 ```
 
-> 注意：`card` 的整张表被连接到了右边。
+####  LEFT JOIN
 
-#### 左外连接
-
-完整显示左边的表 ( `person` ) ，右边的表如果符合条件就显示，不符合则补 `NULL` 。
+完整显示左边的表，右边的表如果符合条件就显示，不符合则补 `NULL` 。
 
 ```mysql
--- LEFT JOIN 也叫做 LEFT OUTER JOIN，用这两种方式的查询结果是一样的。
 SELECT * FROM person LEFT JOIN card on person.cardId = card.id;
 +------+--------+--------+------+-----------+
 | id   | name   | cardId | id   | name      |
@@ -819,9 +811,9 @@ SELECT * FROM person LEFT JOIN card on person.cardId = card.id;
 +------+--------+--------+------+-----------+
 ```
 
-#### 右外链接
+#### 右外链接 RIGHT JOIN
 
-完整显示右边的表 ( `card` ) ，左边的表如果符合条件就显示，不符合则补 `NULL` 。
+完整显示右边的表，左边的表如果符合条件就显示，不符合则补 `NULL` 。
 
 ```mysql
 SELECT * FROM person RIGHT JOIN card on person.cardId = card.id;
@@ -836,17 +828,16 @@ SELECT * FROM person RIGHT JOIN card on person.cardId = card.id;
 +------+--------+--------+------+-----------+
 ```
 
-#### 全外链接
+#### 全外链接 FULL JOIN
 
 完整显示两张表的全部数据。
 
 ```mysql
 -- MySQL 不支持这种语法的全外连接
 -- SELECT * FROM person FULL JOIN card on person.cardId = card.id;
--- 出现错误：
 -- ERROR 1054 (42S22): Unknown column 'person.cardId' in 'on clause'
 
--- MySQL全连接语法，使用 UNION 将两张表合并在一起。
+-- MySQL全连接语法，使用 UNION 将LEFT JOIN结果表 和 RIGHT JOIN结果表合并在一起。
 SELECT * FROM person LEFT JOIN card on person.cardId = card.id
 UNION
 SELECT * FROM person RIGHT JOIN card on person.cardId = card.id;
@@ -864,9 +855,9 @@ SELECT * FROM person RIGHT JOIN card on person.cardId = card.id;
 
 ## 事务
 
-在 MySQL 中，事务其实是一个最小的不可分割的工作单元。事务能够**保证一个业务的完整性**。
+在 MySQL 中，事务是一个最小的不可分割的工作单元。事务能够保证一个业务的完整性。
 
-比如我们的银行转账：
+比如我们的银行转账（a给b转100）：
 
 ```mysql
 -- a -> -100
@@ -878,29 +869,32 @@ UPDATE user set money = money + 100 WHERE name = 'b';
 
 在实际项目中，假设只有一条 SQL 语句执行成功，而另外一条执行失败了，就会出现数据前后不一致。
 
-因此，在执行多条有关联 SQL 语句时，**事务**可能会要求这些 SQL 语句要么同时执行成功，要么就都执行失败。
-
 ### 如何控制事务 - COMMIT / ROLLBACK
+事务可能会要求多条SQL语句同时执行成功或者同时失败。
 
-在 MySQL 中，事务的**自动提交**状态默认是开启的。
+1. 自动提交
+- 查看自动提交状态：`SELECT @@AUTOCOMMIT` ；
+- 设置自动提交状态：`SET AUTOCOMMIT = 0` ;
+- 事物默认自动提交，效果立即体现，不能回滚。
+
+2. 手动提交
+- `@@AUTOCOMMIT = 0` 时，使用 `COMMIT` 命令提交事务。
+
+3. 事务回滚
+- `@@AUTOCOMMIT = 0` 时，使用 `ROLLBACK` 命令回滚事务。
+
+4. 事物开启
+- SET AUTOCOMMIT = 0
+- BEGIN
+- START TRANSACTION
+
+5. 事物提交
+- COMMIT
 
 ```mysql
 -- 查询事务的自动提交状态
-SELECT @@AUTOCOMMIT;
-+--------------+
-| @@AUTOCOMMIT |
-+--------------+
-|            1 |
-+--------------+
-```
 
-**自动提交的作用**：当我们执行一条 SQL 语句的时候，其产生的效果就会立即体现出来，且不能**回滚**。
-
-什么是回滚？举个例子：
-
-```mysql
 CREATE DATABASE bank;
-
 USE bank;
 
 CREATE TABLE user (
@@ -909,55 +903,42 @@ CREATE TABLE user (
     money INT
 );
 
+SELECT @@AUTOCOMMIT;
++--------------+
+| @@AUTOCOMMIT |
++--------------+
+|            1 |
++--------------+
+
 INSERT INTO user VALUES (1, 'a', 1000);
 
-SELECT * FROM user;
 +----+------+-------+
 | id | name | money |
 +----+------+-------+
 |  1 | a    |  1000 |
 +----+------+-------+
-```
 
-可以看到，在执行插入语句后数据立刻生效，原因是 MySQL 中的事务自动将它**提交**到了数据库中。那么所谓**回滚**的意思就是，撤销执行过的所有 SQL 语句，使其回滚到**最后一次提交**数据时的状态。
-
-在 MySQL 中使用 `ROLLBACK` 执行回滚：
-
-```mysql
 -- 回滚到最后一次提交
 ROLLBACK;
-
-SELECT * FROM user;
 +----+------+-------+
 | id | name | money |
 +----+------+-------+
 |  1 | a    |  1000 |
 +----+------+-------+
 ```
-
-由于所有执行过的 SQL 语句都已经被提交过了，所以数据并没有发生回滚。那如何让数据可以发生回滚？
+可以看到，在执行插入语句后数据立刻生效，原因是 MySQL 中的事务自动提交到了数据库。回滚的意思是，撤销执行过的所有 SQL 语句，使其回滚到最后一次提交数据时的状态。
 
 ```mysql
--- 关闭自动提交
+-- 关闭自动提交，数据的变化是在一张虚拟的临时数据表中展示
+-- 发生变化的数据并没有真正插入到数据表中。
 SET AUTOCOMMIT = 0;
-
--- 查询自动提交状态
-SELECT @@AUTOCOMMIT;
 +--------------+
 | @@AUTOCOMMIT |
 +--------------+
 |            0 |
 +--------------+
-```
 
-将自动提交关闭后，测试数据回滚：
-
-```mysql
 INSERT INTO user VALUES (2, 'b', 1000);
-
--- 关闭 AUTOCOMMIT 后，数据的变化是在一张虚拟的临时数据表中展示，
--- 发生变化的数据并没有真正插入到数据表中。
-SELECT * FROM user;
 +----+------+-------+
 | id | name | money |
 +----+------+-------+
@@ -972,11 +953,8 @@ SELECT * FROM user;
 |  1 | a    |  1000 |
 +----+------+-------+
 
--- 由于数据还没有真正提交，可以使用回滚
-ROLLBACK;
 
--- 再次查询
-SELECT * FROM user;
+ROLLBACK;
 +----+------+-------+
 | id | name | money |
 +----+------+-------+
@@ -984,19 +962,14 @@ SELECT * FROM user;
 +----+------+-------+
 ```
 
-那如何将虚拟的数据真正提交到数据库中？使用 `COMMIT` : 
+使用 `COMMIT`手动提交数据 : 
 
 ```mysql
+SET AUTOCOMMIT = 0;
 INSERT INTO user VALUES (2, 'b', 1000);
--- 手动提交数据（持久性），
--- 将数据真正提交到数据库中，执行后不能再回滚提交过的数据。
 COMMIT;
 
--- 提交后测试回滚
-ROLLBACK;
-
--- 再次查询（回滚无效了）
-SELECT * FROM user;
+ROLLBACK;（回滚无效）
 +----+------+-------+
 | id | name | money |
 +----+------+-------+
@@ -1004,72 +977,17 @@ SELECT * FROM user;
 |  2 | b    |  1000 |
 +----+------+-------+
 ```
-
-> **总结**
->
-> 1. **自动提交**
->
->    - 查看自动提交状态：`SELECT @@AUTOCOMMIT` ；
->
->    - 设置自动提交状态：`SET AUTOCOMMIT = 0` 。
->
-> 2. **手动提交**
->
->    `@@AUTOCOMMIT = 0` 时，使用 `COMMIT` 命令提交事务。
->
-> 3. **事务回滚**
->
->    `@@AUTOCOMMIT = 0` 时，使用 `ROLLBACK` 命令回滚事务。
-
-**事务的实际应用**，让我们再回到银行转账项目：
-
-```mysql
--- 转账
-UPDATE user set money = money - 100 WHERE name = 'a';
-
--- 到账
-UPDATE user set money = money + 100 WHERE name = 'b';
-
-SELECT * FROM user;
-+----+------+-------+
-| id | name | money |
-+----+------+-------+
-|  1 | a    |   900 |
-|  2 | b    |  1100 |
-+----+------+-------+
-```
-
-这时假设在转账时发生了意外，就可以使用 `ROLLBACK` 回滚到最后一次提交的状态：
-
-```mysql
--- 假设转账发生了意外，需要回滚。
-ROLLBACK;
-
-SELECT * FROM user;
-+----+------+-------+
-| id | name | money |
-+----+------+-------+
-|  1 | a    |  1000 |
-|  2 | b    |  1000 |
-+----+------+-------+
-```
-
-这时我们又回到了发生意外之前的状态，也就是说，事务给我们提供了一个可以反悔的机会。假设数据没有发生意外，这时可以手动将数据真正提交到数据表中：`COMMIT` 。
 
 ### 手动开启事务 - BEGIN / START TRANSACTION
 
 事务的默认提交被开启 ( `@@AUTOCOMMIT = 1` ) 后，此时就不能使用事务回滚了。但是我们还可以手动开启一个事务处理事件，使其可以发生回滚：
 
 ```mysql
--- 使用 BEGIN 或者 START TRANSACTION 手动开启一个事务
--- START TRANSACTION;
+-- 使用 BEGIN 或者 START TRANSACTION 手动开启一个事务，无自动提交
+
 BEGIN;
 UPDATE user set money = money - 100 WHERE name = 'a';
 UPDATE user set money = money + 100 WHERE name = 'b';
-
--- 由于手动开启的事务没有开启自动提交，
--- 此时发生变化的数据仍然是被保存在一张临时表中。
-SELECT * FROM user;
 +----+------+-------+
 | id | name | money |
 +----+------+-------+
@@ -1077,52 +995,25 @@ SELECT * FROM user;
 |  2 | b    |  1100 |
 +----+------+-------+
 
--- 测试回滚
 ROLLBACK;
-
-SELECT * FROM user;
 +----+------+-------+
 | id | name | money |
 +----+------+-------+
 |  1 | a    |  1000 |
 |  2 | b    |  1000 |
 +----+------+-------+
-```
 
-仍然使用 `COMMIT` 提交数据，提交后无法再发生本次事务的回滚。
-
-```mysql
-BEGIN;
-UPDATE user set money = money - 100 WHERE name = 'a';
-UPDATE user set money = money + 100 WHERE name = 'b';
-
-SELECT * FROM user;
-+----+------+-------+
-| id | name | money |
-+----+------+-------+
-|  1 | a    |   900 |
-|  2 | b    |  1100 |
-+----+------+-------+
-
--- 提交数据
+- 提交
 COMMIT;
-
--- 测试回滚（无效，因为表的数据已经被提交）
-ROLLBACK;
 ```
 
 ### 事务的 ACID 特征与使用
+A （Atomic）原子性: 事务是最小的单位，不可以再分割；
+C （Consistent）一致性: 要求同一事务中的 SQL 语句，必须保证同时成功或者失败；
+I （Isolated）隔离: 事务1 和 事务2 之间是具有隔离性的；
+D （Durability) 持久性: 事务一旦结束 ( `COMMIT` ) ，就不可以再返回了 ( `ROLLBACK` ) 。
 
-**事务的四大特征：**
-
-- **A 原子性**：事务是最小的单位，不可以再分割；
-- **C 一致性**：要求同一事务中的 SQL 语句，必须保证同时成功或者失败；
-- **I 隔离性**：事务1 和 事务2 之间是具有隔离性的；
-- **D 持久性**：事务一旦结束 ( `COMMIT` ) ，就不可以再返回了 ( `ROLLBACK` ) 。
-
-### 事务的隔离性
-
-**事务的隔离性可分为四种 ( 性能从低到高 )** ：
+#### 事务的隔离性
 
 1. **READ UNCOMMITTED ( 读取未提交 )**
 
